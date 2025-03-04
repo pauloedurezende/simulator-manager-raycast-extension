@@ -1,5 +1,5 @@
 // utils/simulator-commands.ts
-import { showToast, Toast } from "@raycast/api";
+import { getPreferenceValues, showToast, Toast } from "@raycast/api";
 import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import { Device, SimulatorDevice } from "../types";
@@ -7,6 +7,11 @@ import { getDeviceType } from "./device-utils";
 import { homedir } from "os";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+
+// Get user preferences
+interface Preferences {
+  androidSdkPath?: string;
+}
 
 export const execAsync = promisify(exec);
 
@@ -46,9 +51,20 @@ export async function fetchIOSDevices(): Promise<Device[]> {
 
 // Find Android SDK tools
 function findAndroidSdkTool(toolName: string): string | null {
+  // Get the custom SDK path from preferences
+  const preferences = getPreferenceValues<Preferences>();
+  const customSdkPath = preferences.androidSdkPath?.trim();
+
+  // Environment variables
   const androidHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
 
   const possiblePaths = [
+    // Custom path from preferences (if provided)
+    customSdkPath ? join(customSdkPath, "platform-tools", toolName) : null,
+    customSdkPath ? join(customSdkPath, "emulator", toolName) : null,
+    customSdkPath ? join(customSdkPath, "tools", toolName) : null,
+    customSdkPath ? join(customSdkPath, "tools/bin", toolName) : null,
+
     // Direct paths
     `/usr/local/bin/${toolName}`,
 
@@ -88,7 +104,26 @@ export async function fetchAndroidDevices(): Promise<Device[]> {
     const adbPath = findAndroidSdkTool("adb");
 
     if (!emulatorPath) {
-      console.warn("Android emulator executable not found");
+      // Get preferences to check if custom path was provided
+      const preferences = getPreferenceValues<Preferences>();
+      const customPathProvided = preferences.androidSdkPath?.trim();
+
+      // Show a more helpful error message if a custom path was provided
+      if (customPathProvided) {
+        console.warn(`Android emulator executable not found in the specified path: ${customPathProvided}`);
+        showToast({
+          style: Toast.Style.Failure,
+          title: "Android SDK not found",
+          message: "The emulator executable was not found in the specified SDK path. Please check your settings.",
+        });
+      } else {
+        console.warn("Android emulator executable not found");
+        showToast({
+          style: Toast.Style.Failure,
+          title: "Android SDK not found",
+          message: "Please set the Android SDK path in the extension preferences.",
+        });
+      }
       return [];
     }
 

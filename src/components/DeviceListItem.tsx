@@ -1,4 +1,4 @@
-import { ActionPanel, Action, List, Icon } from "@raycast/api";
+import { ActionPanel, Action, List, Icon, openExtensionPreferences } from "@raycast/api";
 import { Device } from "../types";
 import { getDeviceTypeIcon, getStatusIcon, getStatusLabel, getStatusColor } from "../utils/device-utils";
 import {
@@ -127,6 +127,13 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
                   onRefresh();
                 }}
               />
+
+              <Action
+                title="Configure Android Sdk Path"
+                icon={Icon.Gear}
+                onAction={() => openExtensionPreferences()}
+                shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
+              />
             </>
           )}
 
@@ -136,6 +143,14 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
             icon={Icon.RotateClockwise}
             onAction={onRefresh}
             shortcut={{ modifiers: ["cmd"], key: "r" }}
+          />
+
+          {/* Settings Action */}
+          <Action
+            title="Configure Android Sdk Path"
+            icon={Icon.Gear}
+            onAction={() => openExtensionPreferences()}
+            shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
           />
           <Action.CopyToClipboard title="Copy Device Id" content={device.id} />
         </ActionPanel>

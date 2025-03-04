@@ -8,10 +8,20 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "simulator-manager",
       "title": "Simulator Manager",
-      "description": "",
-      "mode": "view"
+      "name": "simulator-manager",
+      "description": "Manage iOS simulators and Android emulators",
+      "mode": "view",
+      "preferences": [
+        {
+          "name": "androidSdkPath",
+          "title": "Android SDK Path",
+          "description": "Custom path to your Android SDK installation",
+          "type": "textfield",
+          "required": false,
+          "placeholder": "/path/to/android/sdk"
+        }
+      ]
     }
   ],
   "dependencies": {
