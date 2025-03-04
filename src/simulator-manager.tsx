@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, List, showToast, Toast } from "@raycast/api";
+import { ActionPanel, Action, Icon, List, showToast, Toast, Color } from "@raycast/api";
 import { useState, useEffect } from "react";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -154,6 +154,16 @@ export default function Command() {
     }
   };
 
+  // Function to get status color
+  const getStatusColor = (status: string): Color | undefined => {
+    switch (status) {
+      case "Booted":
+        return Color.Green;
+      default:
+        return undefined; // Use default color
+    }
+  };
+
   // Function to get device type icon
   const getDeviceTypeIcon = (deviceType: string) => {
     switch (deviceType) {
@@ -218,8 +228,8 @@ export default function Command() {
               subtitle={device.runtime}
               accessories={[
                 {
-                  icon: getStatusIcon(device.status),
-                  text: getStatusLabel(device.status),
+                  icon: { source: getStatusIcon(device.status), tintColor: getStatusColor(device.status) },
+                  text: { value: getStatusLabel(device.status), color: getStatusColor(device.status) },
                   tooltip: `Status: ${device.status}`,
                 },
               ]}
