@@ -50,7 +50,6 @@ export default function Command() {
         const devices = deviceList as SimulatorDevice[];
 
         devices.forEach((device) => {
-          console.log({ device });
           iosDevices.push({
             id: device.udid,
             name: device.name,
@@ -166,10 +165,6 @@ export default function Command() {
               icon: getStatusIcon(device.status),
               text: getStatusLabel(device.status),
               tooltip: `Status: ${device.status}`,
-            },
-            {
-              icon: Icon.Mobile,
-              text: CATEGORIES.find((cat) => cat.id === device.category)?.name || "",
             },
           ]}
           actions={
