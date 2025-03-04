@@ -9,13 +9,23 @@ interface DeviceListItemProps {
 }
 
 export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
+  // Extract iOS version from runtime (e.g., "iOS-17-0" -> "iOS 17.0")
+  const formattedVersion = device.runtime
+    .replace("iOS-", "iOS ")
+    .replace(/-/g, ".")
+    .replace("tvOS-", "tvOS ")
+    .replace("watchOS-", "watchOS ");
+
   return (
     <List.Item
       key={device.id}
       icon={getDeviceTypeIcon(device.deviceType)}
       title={device.name}
-      subtitle={device.runtime}
       accessories={[
+        {
+          text: formattedVersion,
+          tooltip: `Version: ${formattedVersion}`,
+        },
         {
           icon: { source: getStatusIcon(device.status), tintColor: getStatusColor(device.status) },
           text: { value: getStatusLabel(device.status), color: getStatusColor(device.status) },
