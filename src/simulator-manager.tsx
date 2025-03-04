@@ -18,6 +18,7 @@ interface Device {
   type: string;
   runtime: string;
   category: string;
+  deviceType: string; // iPhone, iPad, etc.
 }
 
 interface SimulatorDevice {
@@ -32,6 +33,18 @@ export default function Command() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Function to determine device type from name
+  const getDeviceType = (name: string): string => {
+    if (name.includes("iPhone")) return "iPhone";
+    if (name.includes("iPad")) return "iPad";
+    if (name.includes("Apple TV")) return "Apple TV";
+    if (name.includes("Apple Watch")) return "Apple Watch";
+    if (name.includes("HomePod")) return "HomePod";
+    if (name.includes("iPod")) return "iPod";
+    if (name.includes("Mac")) return "Mac";
+    return "Other";
+  };
 
   // Function to fetch devices
   const fetchDevices = async () => {
@@ -50,6 +63,7 @@ export default function Command() {
         const devices = deviceList as SimulatorDevice[];
 
         devices.forEach((device) => {
+          const deviceType = getDeviceType(device.name);
           iosDevices.push({
             id: device.udid,
             name: device.name,
@@ -57,6 +71,7 @@ export default function Command() {
             type: device.deviceTypeIdentifier || "",
             runtime: runtime.replace("com.apple.CoreSimulator.SimRuntime.", ""),
             category: "ios",
+            deviceType,
           });
         });
       });
@@ -96,6 +111,25 @@ export default function Command() {
     return matchesSearch && matchesCategory;
   });
 
+  // Group devices by type
+  const groupedDevices = filteredDevices.reduce(
+    (acc, device) => {
+      if (!acc[device.deviceType]) {
+        acc[device.deviceType] = [];
+      }
+      acc[device.deviceType].push(device);
+      return acc;
+    },
+    {} as Record<string, Device[]>,
+  );
+
+  // Sort device types for consistent ordering
+  const deviceTypes = Object.keys(groupedDevices).sort((a, b) => {
+    // Custom sort order
+    const order = ["iPhone", "iPad", "Apple Watch", "Apple TV", "HomePod", "iPod", "Mac", "Other"];
+    return order.indexOf(a) - order.indexOf(b);
+  });
+
   // Function to get a user-friendly status label
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -117,6 +151,26 @@ export default function Command() {
         return Icon.Circle;
       default:
         return Icon.QuestionMark;
+    }
+  };
+
+  // Function to get device type icon
+  const getDeviceTypeIcon = (deviceType: string) => {
+    switch (deviceType) {
+      case "iPhone":
+        return Icon.Mobile;
+      case "iPad":
+        return Icon.Mobile;
+      case "Apple Watch":
+        return Icon.Mobile;
+      case "Apple TV":
+        return Icon.Mobile;
+      case "HomePod":
+        return Icon.Mobile;
+      case "Mac":
+        return Icon.Mobile;
+      default:
+        return Icon.Mobile;
     }
   };
 
@@ -154,66 +208,70 @@ export default function Command() {
         </List.Dropdown>
       }
     >
-      {filteredDevices.map((device) => (
-        <List.Item
-          key={device.id}
-          icon={Icon.Mobile}
-          title={device.name}
-          subtitle={device.runtime}
-          accessories={[
-            {
-              icon: getStatusIcon(device.status),
-              text: getStatusLabel(device.status),
-              tooltip: `Status: ${device.status}`,
-            },
-          ]}
-          actions={
-            <ActionPanel>
-              {device.status !== "Booted" && (
-                <Action
-                  title="Boot Simulator"
-                  icon={Icon.Play}
-                  onAction={() => {
-                    if (device.category === "ios") {
-                      executeSimulatorCommand("boot", device.id, "Simulator booted successfully");
-                    }
-                  }}
-                />
-              )}
-              {device.status === "Booted" && (
-                <Action
-                  title="Shutdown Simulator"
-                  icon={Icon.Stop}
-                  onAction={() => {
-                    if (device.category === "ios") {
-                      executeSimulatorCommand("shutdown", device.id, "Simulator shut down successfully");
-                    }
-                  }}
-                />
-              )}
-              <Action
-                title="Open Simulator"
-                icon={Icon.Eye}
-                onAction={() => {
-                  if (device.category === "ios") {
-                    exec(`open -a Simulator --args -CurrentDeviceUDID ${device.id}`);
-                    showToast({
-                      style: Toast.Style.Success,
-                      title: "Opening simulator",
-                    });
-                  }
-                }}
-              />
-              <Action
-                title="Refresh Devices"
-                icon={Icon.RotateClockwise}
-                onAction={fetchDevices}
-                shortcut={{ modifiers: ["cmd"], key: "r" }}
-              />
-              <Action.CopyToClipboard title="Copy Device Id" content={device.id} />
-            </ActionPanel>
-          }
-        />
+      {deviceTypes.map((deviceType) => (
+        <List.Section key={deviceType} title={deviceType}>
+          {groupedDevices[deviceType].map((device) => (
+            <List.Item
+              key={device.id}
+              icon={getDeviceTypeIcon(device.deviceType)}
+              title={device.name}
+              subtitle={device.runtime}
+              accessories={[
+                {
+                  icon: getStatusIcon(device.status),
+                  text: getStatusLabel(device.status),
+                  tooltip: `Status: ${device.status}`,
+                },
+              ]}
+              actions={
+                <ActionPanel>
+                  {device.status !== "Booted" && (
+                    <Action
+                      title="Boot Simulator"
+                      icon={Icon.Play}
+                      onAction={() => {
+                        if (device.category === "ios") {
+                          executeSimulatorCommand("boot", device.id, "Simulator booted successfully");
+                        }
+                      }}
+                    />
+                  )}
+                  {device.status === "Booted" && (
+                    <Action
+                      title="Shutdown Simulator"
+                      icon={Icon.Stop}
+                      onAction={() => {
+                        if (device.category === "ios") {
+                          executeSimulatorCommand("shutdown", device.id, "Simulator shut down successfully");
+                        }
+                      }}
+                    />
+                  )}
+                  <Action
+                    title="Open Simulator"
+                    icon={Icon.Eye}
+                    onAction={() => {
+                      if (device.category === "ios") {
+                        exec(`open -a Simulator --args -CurrentDeviceUDID ${device.id}`);
+                        showToast({
+                          style: Toast.Style.Success,
+                          title: "Opening simulator",
+                        });
+                      }
+                    }}
+                  />
+                  <Action
+                    title="Refresh Devices"
+                    icon={Icon.RotateClockwise}
+                    onAction={fetchDevices}
+                    shortcut={{ modifiers: ["cmd"], key: "r" }}
+                  />
+                  <Action.CopyToClipboard title="Copy Device Id" content={device.id} />
+                </ActionPanel>
+              }
+            />
+          ))}
+        </List.Section>
       ))}
     </List>
   );
