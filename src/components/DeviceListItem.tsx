@@ -1,7 +1,13 @@
 import { ActionPanel, Action, List, Icon } from "@raycast/api";
 import { Device } from "../types";
 import { getDeviceTypeIcon, getStatusIcon, getStatusLabel, getStatusColor } from "../utils/device-utils";
-import { executeSimulatorCommand, openSimulator } from "../utils/simulator-commands";
+import {
+  executeSimulatorCommand,
+  openSimulator,
+  startAndroidEmulator,
+  stopAndroidEmulator,
+  openAndroidEmulator,
+} from "../utils/simulator-commands";
 
 interface DeviceListItemProps {
   device: Device;
@@ -41,6 +47,7 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
       ]}
       actions={
         <ActionPanel>
+          {/* iOS Device Actions */}
           {device.category === "ios" && (
             <>
               {device.status !== "Booted" && (
@@ -80,6 +87,50 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
               />
             </>
           )}
+
+          {/* Android Device Actions */}
+          {device.category === "android" && (
+            <>
+              {device.status !== "Booted" && (
+                <Action
+                  title="Boot Emulator"
+                  icon={Icon.Play}
+                  onAction={async () => {
+                    try {
+                      await startAndroidEmulator(device.id);
+                      onRefresh();
+                    } catch (error) {
+                      console.error(error);
+                    }
+                  }}
+                />
+              )}
+              {device.status === "Booted" && (
+                <Action
+                  title="Shutdown Emulator"
+                  icon={Icon.Stop}
+                  onAction={async () => {
+                    try {
+                      await stopAndroidEmulator(device.id);
+                      onRefresh();
+                    } catch (error) {
+                      console.error(error);
+                    }
+                  }}
+                />
+              )}
+              <Action
+                title="Open Emulator"
+                icon={Icon.Eye}
+                onAction={() => {
+                  openAndroidEmulator(device.id);
+                  onRefresh();
+                }}
+              />
+            </>
+          )}
+
+          {/* Common Actions */}
           <Action
             title="Refresh Devices"
             icon={Icon.RotateClockwise}

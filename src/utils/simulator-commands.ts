@@ -1,6 +1,6 @@
 // utils/simulator-commands.ts
 import { showToast, Toast } from "@raycast/api";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import { Device, SimulatorDevice } from "../types";
 import { getDeviceType } from "./device-utils";
@@ -101,21 +101,65 @@ export async function fetchAndroidDevices(): Promise<Device[]> {
       return [];
     }
 
-    // Initialize running devices array
+    // Initialize running devices array and map
     let runningDevices: string[] = [];
+    const runningAvds: Set<string> = new Set();
 
     // Get running emulators if adb is available
     if (adbPath) {
       try {
+        // Get list of running emulator IDs
         const { stdout: adbDevicesOutput } = await execAsync(`${adbPath} devices`);
         runningDevices = adbDevicesOutput
           .split("\n")
           .slice(1) // Skip the first line which is the header
           .filter((line) => line.includes("emulator-") && line.includes("device"))
           .map((line) => line.split("\t")[0]); // Get the device ID
+
+        // For each running emulator, try to determine which AVD it is
+        for (const emulatorId of runningDevices) {
+          try {
+            // Use adb emu avd name to get the AVD name of the running emulator
+            const { stdout: avdNameOutput } = await execAsync(`${adbPath} -s ${emulatorId} emu avd name`);
+            const runningAvdName = avdNameOutput.trim();
+
+            if (runningAvdName && avdNames.includes(runningAvdName)) {
+              runningAvds.add(runningAvdName);
+            }
+          } catch (error) {
+            // If this command fails, try alternative method
+            console.warn(`Could not get AVD name for ${emulatorId}:`, error);
+          }
+        }
+
+        // If we couldn't determine the AVD names using the emu command, try using ps
+        if (runningDevices.length > 0 && runningAvds.size === 0) {
+          try {
+            // On macOS, we can use ps to check running emulators
+            // Note: grep returns exit code 1 if no matches are found, which isn't an error in this context
+            const psOutput = await execAsync("ps aux | grep -v grep | grep qemu-system")
+              .then((result) => result.stdout)
+              .catch((error) => {
+                // Exit code 1 from grep means no matches found, which is fine
+                if (error.code === 1) {
+                  return "";
+                }
+                // For other errors, rethrow
+                throw error;
+              });
+
+            // For each AVD, check if it's in the ps output
+            for (const avdName of avdNames) {
+              if (psOutput.includes(avdName)) {
+                runningAvds.add(avdName);
+              }
+            }
+          } catch (error) {
+            console.warn("Error checking running emulators with ps:", error);
+          }
+        }
       } catch (error) {
         console.warn("Error getting running Android emulators:", error);
-        // Continue with empty running devices list
       }
     } else {
       console.warn("Android Debug Bridge (adb) not found, cannot determine running emulators");
@@ -176,9 +220,8 @@ export async function fetchAndroidDevices(): Promise<Device[]> {
         }
       }
 
-      // Check if this emulator is running
-      // This is a simplistic approach - in reality, we'd need to map AVD names to emulator IDs
-      const isRunning = runningDevices.length > 0 && runningDevices.some((id) => id.includes("emulator"));
+      // Check if this specific emulator is running
+      const isRunning = runningAvds.has(avdName);
 
       androidDevices.push({
         id: avdName,
@@ -252,4 +295,105 @@ export function openSimulator(deviceId: string): void {
     style: Toast.Style.Success,
     title: "Opening simulator",
   });
+}
+
+export async function startAndroidEmulator(avdName: string): Promise<void> {
+  try {
+    const emulatorPath = findAndroidSdkTool("emulator");
+    if (!emulatorPath) {
+      throw new Error("Android emulator executable not found");
+    }
+
+    // Start the emulator in a detached process using spawn instead of exec
+    const process = spawn(emulatorPath, ["-avd", avdName, "-no-snapshot-load"], {
+      detached: true,
+      stdio: "ignore",
+    });
+
+    // Unref the process to allow the parent to exit independently
+    process.unref();
+
+    showToast({
+      style: Toast.Style.Success,
+      title: "Starting Android emulator",
+      message: `${avdName} is starting in the background`,
+    });
+  } catch (error) {
+    showToast({
+      style: Toast.Style.Failure,
+      title: "Failed to start Android emulator",
+      message: String(error),
+    });
+    throw error;
+  }
+}
+
+export async function stopAndroidEmulator(avdName: string): Promise<void> {
+  try {
+    const adbPath = findAndroidSdkTool("adb");
+    if (!adbPath) {
+      throw new Error("Android Debug Bridge (adb) executable not found");
+    }
+
+    // Get list of running emulators
+    const { stdout: adbDevicesOutput } = await execAsync(`${adbPath} devices`);
+    const runningEmulators = adbDevicesOutput
+      .split("\n")
+      .slice(1) // Skip the first line which is the header
+      .filter((line) => line.includes("emulator-") && line.includes("device"))
+      .map((line) => line.split("\t")[0]); // Get the device ID
+
+    if (runningEmulators.length === 0) {
+      throw new Error("No running Android emulators found");
+    }
+
+    // For each running emulator, try to stop it
+    // This is a simplistic approach - ideally we would map AVD names to emulator IDs
+    for (const emulatorId of runningEmulators) {
+      await execAsync(`${adbPath} -s ${emulatorId} emu kill`);
+    }
+
+    showToast({
+      style: Toast.Style.Success,
+      title: "Android emulator stopped",
+      message: `${avdName} has been shut down`,
+    });
+  } catch (error) {
+    showToast({
+      style: Toast.Style.Failure,
+      title: "Failed to stop Android emulator",
+      message: String(error),
+    });
+    throw error;
+  }
+}
+
+export function openAndroidEmulator(avdName: string): void {
+  try {
+    const emulatorPath = findAndroidSdkTool("emulator");
+    if (!emulatorPath) {
+      throw new Error("Android emulator executable not found");
+    }
+
+    // Start the emulator using spawn instead of exec
+    const process = spawn(emulatorPath, ["-avd", avdName], {
+      detached: true,
+      stdio: "ignore",
+    });
+
+    // Unref the process to allow the parent to exit independently
+    process.unref();
+
+    showToast({
+      style: Toast.Style.Success,
+      title: "Opening Android emulator",
+      message: avdName,
+    });
+  } catch (error) {
+    showToast({
+      style: Toast.Style.Failure,
+      title: "Failed to open Android emulator",
+      message: String(error),
+    });
+  }
 }
