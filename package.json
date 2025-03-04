@@ -2,10 +2,23 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "simulator-manager",
   "title": "Simulator Manager",
-  "description": "",
+  "description": "Manage iOS simulators and Android emulators with ease. Boot, shutdown, and open simulators directly from Raycast.",
   "icon": "extension-icon.png",
   "author": "pauloedurezende",
   "license": "MIT",
+  "categories": [
+    "Developer Tools",
+    "Applications"
+  ],
+  "keywords": [
+    "ios",
+    "android",
+    "simulator",
+    "emulator",
+    "xcode",
+    "development",
+    "mobile"
+  ],
   "commands": [
     {
       "title": "Simulator Manager",
