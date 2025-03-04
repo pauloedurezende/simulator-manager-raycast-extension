@@ -3,6 +3,7 @@ import { Device } from "../types";
 
 // Function to determine device type from name
 export function getDeviceType(name: string): string {
+  // iOS devices
   if (name.includes("iPhone")) return "iPhone";
   if (name.includes("iPad")) return "iPad";
   if (name.includes("Apple TV")) return "Apple TV";
@@ -10,6 +11,13 @@ export function getDeviceType(name: string): string {
   if (name.includes("HomePod")) return "HomePod";
   if (name.includes("iPod")) return "iPod";
   if (name.includes("Mac")) return "Mac";
+
+  // Android devices
+  if (name.includes("Pixel") || name.includes("pixel")) return "Android Phone";
+  if (name.includes("Tablet") || name.includes("tablet")) return "Android Tablet";
+  if (name.includes("TV") || name.includes("tv")) return "Android TV";
+  if (name.includes("Wear") || name.includes("wear")) return "Android Wear";
+
   return "Other";
 }
 
@@ -50,6 +58,7 @@ export function getStatusColor(status: string): Color | undefined {
 // Function to get device type icon
 export function getDeviceTypeIcon(deviceType: string) {
   switch (deviceType) {
+    // iOS devices
     case "iPhone":
       return Icon.Mobile;
     case "iPad":
@@ -62,6 +71,17 @@ export function getDeviceTypeIcon(deviceType: string) {
       return Icon.Mobile;
     case "Mac":
       return Icon.Mobile;
+
+    // Android devices
+    case "Android Phone":
+      return Icon.Mobile;
+    case "Android Tablet":
+      return Icon.Mobile;
+    case "Android TV":
+      return Icon.Mobile;
+    case "Android Wear":
+      return Icon.Mobile;
+
     default:
       return Icon.Mobile;
   }

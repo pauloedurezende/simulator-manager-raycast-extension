@@ -9,18 +9,25 @@ interface DeviceListItemProps {
 }
 
 export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
-  // Extract iOS version from runtime (e.g., "iOS-17-0" -> "iOS 17.0")
-  const formattedVersion = device.runtime
-    .replace("iOS-", "iOS ")
-    .replace(/-/g, ".")
-    .replace("tvOS-", "tvOS ")
-    .replace("watchOS-", "watchOS ");
+  // Format the version based on device category
+  let formattedVersion = device.runtime;
+
+  if (device.category === "ios") {
+    // Extract iOS version from runtime (e.g., "iOS-17-0" -> "iOS 17.0")
+    formattedVersion = device.runtime
+      .replace("iOS-", "iOS ")
+      .replace(/-/g, ".")
+      .replace("tvOS-", "tvOS ")
+      .replace("watchOS-", "watchOS ");
+  }
+  // For Android, the version is already formatted in fetchAndroidDevices
 
   return (
     <List.Item
       key={device.id}
       icon={getDeviceTypeIcon(device.deviceType)}
       title={device.name}
+      subtitle={device.deviceType}
       accessories={[
         {
           text: formattedVersion,
@@ -34,47 +41,45 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
       ]}
       actions={
         <ActionPanel>
-          {device.status !== "Booted" && (
-            <Action
-              title="Boot Simulator"
-              icon={Icon.Play}
-              onAction={async () => {
-                if (device.category === "ios") {
-                  try {
-                    await executeSimulatorCommand("boot", device.id, "Simulator booted successfully");
-                    onRefresh();
-                  } catch (error) {
-                    console.error(error);
-                  }
-                }
-              }}
-            />
+          {device.category === "ios" && (
+            <>
+              {device.status !== "Booted" && (
+                <Action
+                  title="Boot Simulator"
+                  icon={Icon.Play}
+                  onAction={async () => {
+                    try {
+                      await executeSimulatorCommand("boot", device.id, "Simulator booted successfully");
+                      onRefresh();
+                    } catch (error) {
+                      console.error(error);
+                    }
+                  }}
+                />
+              )}
+              {device.status === "Booted" && (
+                <Action
+                  title="Shutdown Simulator"
+                  icon={Icon.Stop}
+                  onAction={async () => {
+                    try {
+                      await executeSimulatorCommand("shutdown", device.id, "Simulator shut down successfully");
+                      onRefresh();
+                    } catch (error) {
+                      console.error(error);
+                    }
+                  }}
+                />
+              )}
+              <Action
+                title="Open Simulator"
+                icon={Icon.Eye}
+                onAction={() => {
+                  openSimulator(device.id);
+                }}
+              />
+            </>
           )}
-          {device.status === "Booted" && (
-            <Action
-              title="Shutdown Simulator"
-              icon={Icon.Stop}
-              onAction={async () => {
-                if (device.category === "ios") {
-                  try {
-                    await executeSimulatorCommand("shutdown", device.id, "Simulator shut down successfully");
-                    onRefresh();
-                  } catch (error) {
-                    console.error(error);
-                  }
-                }
-              }}
-            />
-          )}
-          <Action
-            title="Open Simulator"
-            icon={Icon.Eye}
-            onAction={() => {
-              if (device.category === "ios") {
-                openSimulator(device.id);
-              }
-            }}
-          />
           <Action
             title="Refresh Devices"
             icon={Icon.RotateClockwise}
