@@ -94,7 +94,8 @@ export function getDeviceTypeIcon(deviceType: string) {
 export function filterDevices(devices: Device[], searchText: string, selectedCategory: string): Device[] {
   return devices.filter((device) => {
     const matchesSearch = device.name.toLowerCase().includes(searchText.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || device.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory.toLowerCase() === "all" || device.category.toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
 }
