@@ -127,13 +127,6 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
                   onRefresh();
                 }}
               />
-
-              <Action
-                title="Configure Android Sdk Path"
-                icon={Icon.Gear}
-                onAction={() => openExtensionPreferences()}
-                shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
-              />
             </>
           )}
 
@@ -144,6 +137,7 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
             onAction={onRefresh}
             shortcut={{ modifiers: ["cmd"], key: "r" }}
           />
+          <Action.CopyToClipboard title="Copy Device Id" content={device.id} />
 
           {/* Settings Action */}
           <Action
@@ -152,7 +146,6 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
             onAction={() => openExtensionPreferences()}
             shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
           />
-          <Action.CopyToClipboard title="Copy Device Id" content={device.id} />
         </ActionPanel>
       }
     />
