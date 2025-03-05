@@ -85,6 +85,7 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
                 onAction={async () => {
                   try {
                     await openSimulator(device.id);
+                    onRefresh();
                   } catch (error) {
                     showFailureToast(error);
                   }
