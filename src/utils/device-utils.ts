@@ -1,8 +1,8 @@
 import { Color, Icon } from "@raycast/api";
-import { Device } from "../types";
+import { Device, DeviceType } from "../types";
 
 // Function to determine device type from name
-export function getDeviceType(name: string): string {
+export function getDeviceType(name: string): DeviceType {
   // iOS devices
   if (name.includes("iPhone")) return "iPhone";
   if (name.includes("iPad")) return "iPad";

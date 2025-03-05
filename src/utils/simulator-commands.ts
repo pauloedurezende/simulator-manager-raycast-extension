@@ -2,7 +2,7 @@
 import { getPreferenceValues, showToast, Toast } from "@raycast/api";
 import { exec, spawn } from "child_process";
 import { promisify } from "util";
-import { Device, SimulatorDevice } from "../types";
+import { Device, DeviceType, SimulatorDevice } from "../types";
 import { getDeviceType } from "./device-utils";
 import { homedir } from "os";
 import { existsSync, readFileSync } from "fs";
@@ -206,7 +206,7 @@ export async function fetchAndroidDevices(): Promise<Device[]> {
     for (const avdName of avdNames) {
       // Try to find the AVD config file
       const avdConfigPath = join(homedir(), ".android/avd", `${avdName}.avd/config.ini`);
-      let deviceType = "Android Phone";
+      let deviceType: DeviceType = "Android Phone";
       let androidVersion = "Unknown";
 
       if (existsSync(avdConfigPath)) {
