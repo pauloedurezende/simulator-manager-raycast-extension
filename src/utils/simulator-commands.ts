@@ -1,5 +1,6 @@
 // utils/simulator-commands.ts
 import { getPreferenceValues, showToast, Toast } from "@raycast/api";
+import { showFailureToast } from "@raycast/utils";
 import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import { Device, DeviceType, SimulatorDevice } from "../types";
@@ -111,17 +112,16 @@ export async function fetchAndroidDevices(): Promise<Device[]> {
       // Show a more helpful error message if a custom path was provided
       if (customPathProvided) {
         console.warn(`Android emulator executable not found in the specified path: ${customPathProvided}`);
-        showToast({
-          style: Toast.Style.Failure,
-          title: "Android SDK not found",
-          message: "The emulator executable was not found in the specified SDK path. Please check your settings.",
-        });
+        showFailureToast(
+          new Error("The emulator executable was not found in the specified SDK path. Please check your settings."),
+          {
+            title: "Android SDK not found",
+          },
+        );
       } else {
         console.warn("Android emulator executable not found");
-        showToast({
-          style: Toast.Style.Failure,
+        showFailureToast(new Error("Please set the Android SDK path in the extension preferences."), {
           title: "Android SDK not found",
-          message: "Please set the Android SDK path in the extension preferences.",
         });
       }
       return [];
@@ -314,11 +314,7 @@ export async function executeSimulatorCommand(
       title: successMessage,
     });
   } catch (error) {
-    showToast({
-      style: Toast.Style.Failure,
-      title: `Failed to ${command} simulator`,
-      message: String(error),
-    });
+    showFailureToast(error, { title: `Failed to ${command} simulator` });
     throw error;
   }
 }
@@ -329,11 +325,7 @@ export function openSimulator(deviceId: string): void {
     exec(`open -a Simulator --args -CurrentDeviceUDID ${deviceId}`);
     showToast({ style: Toast.Style.Success, title: "Opening simulator" });
   } catch (error) {
-    showToast({
-      style: Toast.Style.Failure,
-      title: "Failed to open simulator",
-      message: String(error),
-    });
+    showFailureToast(error, { title: "Failed to open simulator" });
     throw error;
   }
 }
@@ -360,11 +352,7 @@ export async function startAndroidEmulator(avdName: string): Promise<void> {
       message: `${avdName} is starting in the background`,
     });
   } catch (error) {
-    showToast({
-      style: Toast.Style.Failure,
-      title: "Failed to start Android emulator",
-      message: String(error),
-    });
+    showFailureToast(error, { title: "Failed to start Android emulator" });
     throw error;
   }
 }
@@ -494,11 +482,7 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
     });
   } catch (error) {
     console.error("Error stopping Android emulator:", error);
-    showToast({
-      style: Toast.Style.Failure,
-      title: "Failed to stop Android emulator",
-      message: String(error),
-    });
+    showFailureToast(error, { title: "Failed to stop Android emulator" });
     throw error;
   }
 }
@@ -525,10 +509,6 @@ export function openAndroidEmulator(avdName: string): void {
       message: avdName,
     });
   } catch (error) {
-    showToast({
-      style: Toast.Style.Failure,
-      title: "Failed to open Android emulator",
-      message: String(error),
-    });
+    showFailureToast(error, { title: "Failed to open Android emulator" });
   }
 }
