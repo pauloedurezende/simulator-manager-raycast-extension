@@ -1,4 +1,5 @@
 import { ActionPanel, Action, List, Icon, openExtensionPreferences } from "@raycast/api";
+import { showFailureToast } from "@raycast/utils";
 import { Device } from "../types";
 import { getDeviceTypeIcon, getStatusIcon, getStatusLabel, getStatusColor } from "../utils/device-utils";
 import {
@@ -59,7 +60,7 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
                       await executeSimulatorCommand("boot", device.id, "Simulator booted successfully");
                       onRefresh();
                     } catch (error) {
-                      console.error(error);
+                      showFailureToast(error);
                     }
                   }}
                 />
@@ -73,7 +74,7 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
                       await executeSimulatorCommand("shutdown", device.id, "Simulator shut down successfully");
                       onRefresh();
                     } catch (error) {
-                      console.error(error);
+                      showFailureToast(error);
                     }
                   }}
                 />
@@ -100,7 +101,7 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
                       await startAndroidEmulator(device.id);
                       onRefresh();
                     } catch (error) {
-                      console.error(error);
+                      showFailureToast(error);
                     }
                   }}
                 />
@@ -114,7 +115,7 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
                       await stopAndroidEmulator(device.id);
                       onRefresh();
                     } catch (error) {
-                      console.error(error);
+                      showFailureToast(error);
                     }
                   }}
                 />
