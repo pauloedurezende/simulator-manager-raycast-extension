@@ -382,11 +382,104 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
       throw new Error("No running Android emulators found");
     }
 
-    // For each running emulator, try to stop it
-    // This is a simplistic approach - ideally we would map AVD names to emulator IDs
+    // Log for debugging
+    console.log(`Trying to stop AVD: ${avdName}`);
+    console.log(`Running emulators: ${JSON.stringify(runningEmulators)}`);
+
+    // Create a mapping of emulator IDs to AVD names
+    const emulatorToAvdMap = new Map<string, string>();
+    
+    // Try to get AVD names for all running emulators
     for (const emulatorId of runningEmulators) {
-      await execAsync(`${adbPath} -s ${emulatorId} emu kill`);
+      try {
+        const { stdout } = await execAsync(`${adbPath} -s ${emulatorId} emu avd name`);
+        const trimmedAvdName = stdout.trim();
+        
+        console.log(`Emulator ${emulatorId} is running AVD: ${trimmedAvdName}`);
+        
+        if (trimmedAvdName) {
+          emulatorToAvdMap.set(emulatorId, trimmedAvdName);
+        }
+      } catch (error) {
+        console.warn(`Could not get AVD name for ${emulatorId}:`, error);
+      }
     }
+
+    // Find the emulator running our target AVD
+    let targetEmulatorId: string | null = null;
+    
+    // First, try direct mapping
+    for (const [emulatorId, runningAvdName] of emulatorToAvdMap.entries()) {
+      if (runningAvdName === avdName) {
+        targetEmulatorId = emulatorId;
+        console.log(`Found exact match: ${emulatorId} is running ${avdName}`);
+        break;
+      }
+    }
+
+    // If no direct match, try case-insensitive comparison
+    if (!targetEmulatorId) {
+      for (const [emulatorId, runningAvdName] of emulatorToAvdMap.entries()) {
+        if (runningAvdName.toLowerCase() === avdName.toLowerCase()) {
+          targetEmulatorId = emulatorId;
+          console.log(`Found case-insensitive match: ${emulatorId} is running ${runningAvdName}`);
+          break;
+        }
+      }
+    }
+
+    // If still no match but we have running emulators with unknown AVDs,
+    // and we only have one running emulator, use that one
+    if (!targetEmulatorId && runningEmulators.length === 1) {
+      targetEmulatorId = runningEmulators[0];
+      console.log(`Using only running emulator as fallback: ${targetEmulatorId}`);
+    }
+
+    // If we still don't have a target, try using ps command as a last resort
+    if (!targetEmulatorId) {
+      try {
+        console.log("Trying ps command to find the emulator process");
+        const psOutput = await execAsync("ps aux | grep -v grep | grep qemu-system")
+          .then(result => result.stdout)
+          .catch(error => {
+            if (error.code === 1) return ""; // No matches
+            throw error;
+          });
+
+        console.log(`PS output: ${psOutput}`);
+
+        // Look for the AVD name in the process list
+        if (psOutput.includes(avdName)) {
+          // If there's only one emulator running, use that
+          if (runningEmulators.length === 1) {
+            targetEmulatorId = runningEmulators[0];
+            console.log(`Found AVD in ps output, using emulator: ${targetEmulatorId}`);
+          } else {
+            // If multiple emulators are running, we need to be careful
+            // Let's just use the first one and warn the user
+            targetEmulatorId = runningEmulators[0];
+            console.log(`Multiple emulators running, using first one: ${targetEmulatorId}`);
+            showToast({
+              style: Toast.Style.Failure,
+              title: "Multiple emulators running",
+              message: "Shutting down the first emulator found. This may not be the one you selected.",
+            });
+          }
+        }
+      } catch (error) {
+        console.warn("Error using ps command:", error);
+      }
+    }
+
+    // If we still don't have a target, we can't proceed
+    if (!targetEmulatorId) {
+      throw new Error(`Could not identify which emulator is running AVD: ${avdName}`);
+    }
+
+    console.log(`Stopping emulator: ${targetEmulatorId}`);
+    
+    // Stop the target emulator
+    await execAsync(`${adbPath} -s ${targetEmulatorId} emu kill`);
 
     showToast({
       style: Toast.Style.Success,
@@ -394,6 +487,7 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
       message: `${avdName} has been shut down`,
     });
   } catch (error) {
+    console.error("Error stopping Android emulator:", error);
     showToast({
       style: Toast.Style.Failure,
       title: "Failed to stop Android emulator",
