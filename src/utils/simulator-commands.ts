@@ -325,11 +325,17 @@ export async function executeSimulatorCommand(
 
 // Open a simulator
 export function openSimulator(deviceId: string): void {
-  exec(`open -a Simulator --args -CurrentDeviceUDID ${deviceId}`);
-  showToast({
-    style: Toast.Style.Success,
-    title: "Opening simulator",
-  });
+  try {
+    exec(`open -a Simulator --args -CurrentDeviceUDID ${deviceId}`);
+    showToast({ style: Toast.Style.Success, title: "Opening simulator" });
+  } catch (error) {
+    showToast({
+      style: Toast.Style.Failure,
+      title: "Failed to open simulator",
+      message: String(error),
+    });
+    throw error;
+  }
 }
 
 export async function startAndroidEmulator(avdName: string): Promise<void> {
@@ -388,15 +394,15 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
 
     // Create a mapping of emulator IDs to AVD names
     const emulatorToAvdMap = new Map<string, string>();
-    
+
     // Try to get AVD names for all running emulators
     for (const emulatorId of runningEmulators) {
       try {
         const { stdout } = await execAsync(`${adbPath} -s ${emulatorId} emu avd name`);
         const trimmedAvdName = stdout.trim();
-        
+
         console.log(`Emulator ${emulatorId} is running AVD: ${trimmedAvdName}`);
-        
+
         if (trimmedAvdName) {
           emulatorToAvdMap.set(emulatorId, trimmedAvdName);
         }
@@ -407,7 +413,7 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
 
     // Find the emulator running our target AVD
     let targetEmulatorId: string | null = null;
-    
+
     // First, try direct mapping
     for (const [emulatorId, runningAvdName] of emulatorToAvdMap.entries()) {
       if (runningAvdName === avdName) {
@@ -440,8 +446,8 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
       try {
         console.log("Trying ps command to find the emulator process");
         const psOutput = await execAsync("ps aux | grep -v grep | grep qemu-system")
-          .then(result => result.stdout)
-          .catch(error => {
+          .then((result) => result.stdout)
+          .catch((error) => {
             if (error.code === 1) return ""; // No matches
             throw error;
           });
@@ -477,7 +483,7 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
     }
 
     console.log(`Stopping emulator: ${targetEmulatorId}`);
-    
+
     // Stop the target emulator
     await execAsync(`${adbPath} -s ${targetEmulatorId} emu kill`);
 
