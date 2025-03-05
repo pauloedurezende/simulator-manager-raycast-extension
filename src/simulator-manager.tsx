@@ -1,4 +1,5 @@
-import { List, showToast, Toast } from "@raycast/api";
+import { List } from "@raycast/api";
+import { showFailureToast } from "@raycast/utils";
 import { useState, useEffect } from "react";
 import { Device } from "./types";
 import { CATEGORIES, DEVICE_TYPE_ORDER, REFRESH_INTERVAL } from "./constants";
@@ -26,11 +27,7 @@ export default function Command() {
       setDevices([...iosDevices, ...androidDevices]);
     } catch (error) {
       console.error("Error fetching devices:", error);
-      showToast({
-        style: Toast.Style.Failure,
-        title: "Failed to fetch devices",
-        message: String(error),
-      });
+      showFailureToast(error, { title: "Failed to fetch devices" });
     } finally {
       setIsLoading(false);
     }
