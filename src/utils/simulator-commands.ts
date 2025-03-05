@@ -386,10 +386,12 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
     // Try to get AVD names for all running emulators
     for (const emulatorId of runningEmulators) {
       try {
+        // Use adb emu avd name to get the AVD name of the running emulator
         const { stdout } = await execAsync(`${adbPath} -s ${emulatorId} emu avd name`);
-        const trimmedAvdName = stdout.trim();
+        // Clean up the AVD name - remove any trailing "OK" and whitespace
+        const trimmedAvdName = stdout.replace(/\s*OK\s*$/, "").trim();
 
-        console.log(`Emulator ${emulatorId} is running AVD: ${trimmedAvdName}`);
+        console.log(`Emulator ${emulatorId} is running AVD: '${trimmedAvdName}'`);
 
         if (trimmedAvdName) {
           emulatorToAvdMap.set(emulatorId, trimmedAvdName);
@@ -402,7 +404,7 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
     // Find the emulator running our target AVD
     let targetEmulatorId: string | null = null;
 
-    // First, try direct mapping
+    // First, try exact string matching
     for (const [emulatorId, runningAvdName] of emulatorToAvdMap.entries()) {
       if (runningAvdName === avdName) {
         targetEmulatorId = emulatorId;
@@ -411,10 +413,22 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
       }
     }
 
-    // If no direct match, try case-insensitive comparison
+    // If no exact match, check if any of the running AVDs contains our target AVD name
     if (!targetEmulatorId) {
       for (const [emulatorId, runningAvdName] of emulatorToAvdMap.entries()) {
-        if (runningAvdName.toLowerCase() === avdName.toLowerCase()) {
+        if (runningAvdName.includes(avdName)) {
+          targetEmulatorId = emulatorId;
+          console.log(`Found partial match: ${emulatorId} is running ${runningAvdName} which includes ${avdName}`);
+          break;
+        }
+      }
+    }
+
+    // If still no match, try case-insensitive comparison
+    if (!targetEmulatorId) {
+      const lowerAvdName = avdName.toLowerCase();
+      for (const [emulatorId, runningAvdName] of emulatorToAvdMap.entries()) {
+        if (runningAvdName.toLowerCase() === lowerAvdName) {
           targetEmulatorId = emulatorId;
           console.log(`Found case-insensitive match: ${emulatorId} is running ${runningAvdName}`);
           break;
@@ -422,14 +436,21 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
       }
     }
 
-    // If still no match but we have running emulators with unknown AVDs,
-    // and we only have one running emulator, use that one
-    if (!targetEmulatorId && runningEmulators.length === 1) {
-      targetEmulatorId = runningEmulators[0];
-      console.log(`Using only running emulator as fallback: ${targetEmulatorId}`);
+    // If still no match, try case-insensitive partial match
+    if (!targetEmulatorId) {
+      const lowerAvdName = avdName.toLowerCase();
+      for (const [emulatorId, runningAvdName] of emulatorToAvdMap.entries()) {
+        if (runningAvdName.toLowerCase().includes(lowerAvdName)) {
+          targetEmulatorId = emulatorId;
+          console.log(
+            `Found case-insensitive partial match: ${emulatorId} is running ${runningAvdName} which includes ${avdName}`,
+          );
+          break;
+        }
+      }
     }
 
-    // If we still don't have a target, try using ps command as a last resort
+    // If we still don't have a target, try using ps command to correlate process info with running emulators
     if (!targetEmulatorId) {
       try {
         console.log("Trying ps command to find the emulator process");
@@ -443,26 +464,72 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
         console.log(`PS output: ${psOutput}`);
 
         // Look for the AVD name in the process list
-        if (psOutput.includes(avdName)) {
-          // If there's only one emulator running, use that
-          if (runningEmulators.length === 1) {
-            targetEmulatorId = runningEmulators[0];
-            console.log(`Found AVD in ps output, using emulator: ${targetEmulatorId}`);
-          } else {
-            // If multiple emulators are running, we need to be careful
-            // Let's just use the first one and warn the user
-            targetEmulatorId = runningEmulators[0];
-            console.log(`Multiple emulators running, using first one: ${targetEmulatorId}`);
-            showToast({
-              style: Toast.Style.Failure,
-              title: "Multiple emulators running",
-              message: "Shutting down the first emulator found. This may not be the one you selected.",
-            });
+        const psLines = psOutput.split("\n");
+
+        // Create a map of AVD names to process IDs from the ps output
+        const avdToPidMap = new Map<string, number>();
+
+        for (const line of psLines) {
+          const avdMatch = line.match(/-avd\s+([^\s]+)/);
+          if (avdMatch && avdMatch[1]) {
+            const avdNameFromPs = avdMatch[1];
+            const pidMatch = line.match(/^\S+\s+(\d+)/);
+            if (pidMatch && pidMatch[1]) {
+              const pid = parseInt(pidMatch[1]);
+              avdToPidMap.set(avdNameFromPs, pid);
+              console.log(`Found process for AVD ${avdNameFromPs} with PID ${pid}`);
+            }
+          }
+        }
+
+        // If we found our target AVD in the ps output
+        if (avdToPidMap.has(avdName)) {
+          const targetPid = avdToPidMap.get(avdName);
+          console.log(`Found target AVD ${avdName} with PID ${targetPid}`);
+
+          // Now we need to find which emulator ID corresponds to this process
+          // We can use the 'adb emu avd pid' command to get the PID for each emulator
+          for (const emulatorId of runningEmulators) {
+            try {
+              const { stdout: pidOutput } = await execAsync(`${adbPath} -s ${emulatorId} emu avd pid`);
+              const emulatorPid = parseInt(pidOutput.trim());
+              console.log(`Emulator ${emulatorId} has PID ${emulatorPid}`);
+
+              if (emulatorPid === targetPid) {
+                targetEmulatorId = emulatorId;
+                console.log(`Matched emulator ${emulatorId} to PID ${targetPid} for AVD ${avdName}`);
+                break;
+              }
+            } catch (error) {
+              console.warn(`Could not get PID for emulator ${emulatorId}:`, error);
+            }
+          }
+
+          // If we still couldn't match by PID, but we have the AVD in our map
+          if (!targetEmulatorId) {
+            // Try to match by AVD name again with the cleaned up names
+            for (const [emulatorId, runningAvdName] of emulatorToAvdMap.entries()) {
+              // Clean up the AVD name from ps for comparison
+              const cleanAvdName = avdName.replace(/\s+/g, "");
+              const cleanRunningAvdName = runningAvdName.replace(/\s+/g, "");
+
+              if (cleanRunningAvdName === cleanAvdName) {
+                targetEmulatorId = emulatorId;
+                console.log(`Matched emulator ${emulatorId} to AVD ${avdName} after cleanup`);
+                break;
+              }
+            }
           }
         }
       } catch (error) {
         console.warn("Error using ps command:", error);
       }
+    }
+
+    // If we still don't have a target but have only one running emulator, use it as a last resort
+    if (!targetEmulatorId && runningEmulators.length === 1) {
+      targetEmulatorId = runningEmulators[0];
+      console.log(`Using only running emulator as fallback: ${targetEmulatorId}`);
     }
 
     // If we still don't have a target, we can't proceed
