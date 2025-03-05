@@ -50,7 +50,26 @@ export default function Command() {
 
   // Sort device types for consistent ordering
   const deviceTypes = Object.keys(groupedDevices).sort((a, b) => {
-    return DEVICE_TYPE_ORDER.indexOf(a) - DEVICE_TYPE_ORDER.indexOf(b);
+    const indexA = DEVICE_TYPE_ORDER.indexOf(a);
+    const indexB = DEVICE_TYPE_ORDER.indexOf(b);
+
+    // If both types are in the order array, sort by their positions
+    if (indexA >= 0 && indexB >= 0) {
+      return indexA - indexB;
+    }
+
+    // If only a is in the order array, it comes first
+    if (indexA >= 0) {
+      return -1;
+    }
+
+    // If only b is in the order array, it comes first
+    if (indexB >= 0) {
+      return 1;
+    }
+
+    // If neither is in the order array, sort alphabetically
+    return a.localeCompare(b);
   });
 
   return (
