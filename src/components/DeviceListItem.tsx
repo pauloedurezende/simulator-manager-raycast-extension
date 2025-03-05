@@ -82,8 +82,12 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
               <Action
                 title="Open Simulator"
                 icon={Icon.Eye}
-                onAction={() => {
-                  openSimulator(device.id);
+                onAction={async () => {
+                  try {
+                    await openSimulator(device.id);
+                  } catch (error) {
+                    showFailureToast(error);
+                  }
                 }}
               />
             </>
