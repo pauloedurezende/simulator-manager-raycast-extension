@@ -21,21 +21,43 @@
   ],
   "commands": [
     {
-      "title": "Simulator Manager",
-      "subtitle": "Boot, Shutdown & Manage",
-      "name": "simulator-manager",
-      "description": "Manage iOS simulators and Android emulators",
       "mode": "view",
+      "title": "Simulator Manager",
       "preferences": [
         {
-          "name": "androidSdkPath",
-          "title": "Android SDK Path",
-          "description": "Custom path to your Android SDK installation",
-          "type": "textfield",
           "required": false,
-          "placeholder": "/path/to/android/sdk"
+          "title": "Android SDK Path",
+          "placeholder": "/path/to/android/sdk",
+          "name": "androidSdkPath",
+          "description": "Custom path to your Android SDK installation",
+          "type": "textfield"
+        },
+        {
+          "required": true,
+          "title": "Device Types to Display",
+          "name": "deviceTypesToDisplay",
+          "description": "Choose which simulator types to display in the list",
+          "type": "dropdown",
+          "data": [
+            {
+              "title": "All Devices",
+              "value": "all"
+            },
+            {
+              "title": "iOS Simulators Only",
+              "value": "ios"
+            },
+            {
+              "title": "Android Emulators Only",
+              "value": "android"
+            }
+          ],
+          "default": "all"
         }
-      ]
+      ],
+      "subtitle": "Boot, Shutdown & Manage",
+      "name": "simulator-manager",
+      "description": "Manage iOS simulators and Android emulators"
     }
   ],
   "dependencies": {

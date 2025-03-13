@@ -1,4 +1,4 @@
-import { List } from "@raycast/api";
+import { List, getPreferenceValues } from "@raycast/api";
 import { showFailureToast } from "@raycast/utils";
 import { useState, useEffect } from "react";
 import { Device } from "./types";
@@ -7,22 +7,45 @@ import { filterDevices, groupDevicesByType } from "./utils/device-utils";
 import { fetchIOSDevices, fetchAndroidDevices } from "./utils/simulator-commands";
 import { DeviceListItem } from "./components/DeviceListItem";
 
+// Define the interface for preferences
+interface Preferences {
+  androidSdkPath?: string;
+  deviceTypesToDisplay: string;
+}
+
 export default function Command() {
   const [searchText, setSearchText] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Get user preferences
+  const preferences = getPreferenceValues<Preferences>();
+  const deviceTypesToDisplay = preferences.deviceTypesToDisplay || "all";
+
+  // Set the selected category based on the preference
+  // If deviceTypesToDisplay is "ios" or "android", force that selection
+  // Otherwise, allow user selection (default to "all")
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    deviceTypesToDisplay !== "all" ? deviceTypesToDisplay : "all",
+  );
 
   // Function to fetch all devices
   const fetchDevices = async () => {
     try {
       setIsLoading(true);
 
-      // Fetch iOS simulators
-      const iosDevices = await fetchIOSDevices();
+      let iosDevices: Device[] = [];
+      let androidDevices: Device[] = [];
 
-      // Fetch Android emulators
-      const androidDevices = await fetchAndroidDevices();
+      // Fetch iOS simulators if needed
+      if (deviceTypesToDisplay === "all" || deviceTypesToDisplay === "ios") {
+        iosDevices = await fetchIOSDevices();
+      }
+
+      // Fetch Android emulators if needed
+      if (deviceTypesToDisplay === "all" || deviceTypesToDisplay === "android") {
+        androidDevices = await fetchAndroidDevices();
+      }
 
       setDevices([...iosDevices, ...androidDevices]);
     } catch (error) {
@@ -30,6 +53,13 @@ export default function Command() {
       showFailureToast(error, { title: "Failed to fetch devices" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle category change - only allowed when deviceTypesToDisplay is "all"
+  const handleCategoryChange = (newCategory: string) => {
+    if (deviceTypesToDisplay === "all") {
+      setSelectedCategory(newCategory);
     }
   };
 
@@ -42,7 +72,14 @@ export default function Command() {
 
     // Clean up the interval when component unmounts
     return () => clearInterval(intervalId);
-  }, []);
+  }, [deviceTypesToDisplay]); // Re-fetch when deviceTypesToDisplay changes
+
+  // When deviceTypesToDisplay changes, update selectedCategory to match
+  useEffect(() => {
+    if (deviceTypesToDisplay !== "all") {
+      setSelectedCategory(deviceTypesToDisplay);
+    }
+  }, [deviceTypesToDisplay]);
 
   // Filter and group devices
   const filteredDevices = filterDevices(devices, searchText, selectedCategory);
@@ -72,6 +109,9 @@ export default function Command() {
     return a.localeCompare(b);
   });
 
+  // Determine dropdown visibility based on preference
+  const showDropdown = deviceTypesToDisplay === "all";
+
   return (
     <List
       isLoading={isLoading}
@@ -79,11 +119,13 @@ export default function Command() {
       onSearchTextChange={setSearchText}
       searchBarPlaceholder="Search devices..."
       searchBarAccessory={
-        <List.Dropdown tooltip="Filter by device type" value={selectedCategory} onChange={setSelectedCategory}>
-          {CATEGORIES.map((category) => (
-            <List.Dropdown.Item key={category.id} title={category.name} value={category.id} />
-          ))}
-        </List.Dropdown>
+        showDropdown ? (
+          <List.Dropdown tooltip="Filter by device type" value={selectedCategory} onChange={handleCategoryChange}>
+            {CATEGORIES.map((category) => (
+              <List.Dropdown.Item key={category.id} title={category.name} value={category.id} />
+            ))}
+          </List.Dropdown>
+        ) : null
       }
     >
       {deviceTypes.map((deviceType) => (
