@@ -1,12 +1,9 @@
 import { Color, Icon } from "@raycast/api";
-import { Device, DeviceType } from "../types";
+import { Device, DeviceType } from "./types";
 
-// Function to determine device type from name
 export function getDeviceType(name: string): DeviceType {
-  // Convert name to lowercase once for all comparisons
   const lowerName = name.toLowerCase();
 
-  // iOS devices - usando verificações case-insensitive
   if (lowerName.includes("iphone")) return "iPhone";
   if (lowerName.includes("ipad")) return "iPad";
   if (lowerName.includes("apple tv")) return "Apple TV";
@@ -15,7 +12,6 @@ export function getDeviceType(name: string): DeviceType {
   if (lowerName.includes("ipod")) return "iPod";
   if (lowerName.includes("mac")) return "Mac";
 
-  // Android devices
   if (lowerName.includes("pixel")) return "Android Phone";
   if (lowerName.includes("tablet")) return "Android Tablet";
   if (lowerName.includes("tv")) return "Android TV";
@@ -24,41 +20,6 @@ export function getDeviceType(name: string): DeviceType {
   return "Other";
 }
 
-// Function to get a user-friendly status label
-export function getStatusLabel(status: string): string {
-  switch (status) {
-    case "Booted":
-      return "Running";
-    case "Shutdown":
-      return "Stopped";
-    default:
-      return status;
-  }
-}
-
-// Function to get appropriate status icon
-export function getStatusIcon(status: string) {
-  switch (status) {
-    case "Booted":
-      return Icon.CheckCircle;
-    case "Shutdown":
-      return Icon.Circle;
-    default:
-      return Icon.QuestionMark;
-  }
-}
-
-// Function to get status color
-export function getStatusColor(status: string): Color | undefined {
-  switch (status) {
-    case "Booted":
-      return Color.Green;
-    default:
-      return undefined;
-  }
-}
-
-// Function to get device type icon
 export function getDeviceTypeIcon(deviceType: string) {
   switch (deviceType) {
     // iOS devices
@@ -90,7 +51,45 @@ export function getDeviceTypeIcon(deviceType: string) {
   }
 }
 
-// Filter devices based on search text and category
+export function getStatusLabel(status: string): string {
+  switch (status) {
+    case "Booted":
+      return "Running";
+    case "Shutdown":
+      return "Stopped";
+    default:
+      return status;
+  }
+}
+
+export function getStatusIcon(status: string) {
+  switch (status) {
+    case "Booted":
+      return Icon.CheckCircle;
+    case "Shutdown":
+      return Icon.Circle;
+    default:
+      return Icon.QuestionMark;
+  }
+}
+
+export function getStatusColor(status: string): Color | undefined {
+  switch (status) {
+    case "Booted":
+      return Color.Green;
+    default:
+      return undefined;
+  }
+}
+
+export function formatDeviceVersion(runtime: string, category: string): string {
+  if (category === "ios") {
+    return runtime.replace("iOS-", "iOS ").replace(/-/g, ".").replace("tvOS-", "tvOS ").replace("watchOS-", "watchOS ");
+  }
+
+  return runtime;
+}
+
 export function filterDevices(devices: Device[], searchText: string, selectedCategory: string): Device[] {
   return devices.filter((device) => {
     const matchesSearch = device.name.toLowerCase().includes(searchText.toLowerCase());
@@ -100,7 +99,6 @@ export function filterDevices(devices: Device[], searchText: string, selectedCat
   });
 }
 
-// Group devices by type
 export function groupDevicesByType(devices: Device[]): Record<string, Device[]> {
   return devices.reduce(
     (acc, device) => {

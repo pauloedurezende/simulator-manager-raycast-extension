@@ -4,10 +4,10 @@ import { showFailureToast } from "@raycast/utils";
 import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import { Device, DeviceType, SimulatorDevice } from "../types";
-import { getDeviceType } from "./device-utils";
 import { homedir } from "os";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import { getDeviceType } from "../utils";
 
 // Get user preferences
 interface Preferences {

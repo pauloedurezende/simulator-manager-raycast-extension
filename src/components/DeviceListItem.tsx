@@ -1,14 +1,8 @@
-import { ActionPanel, Action, List, Icon, openExtensionPreferences } from "@raycast/api";
-import { showFailureToast } from "@raycast/utils";
+import { ActionPanel, List } from "@raycast/api";
 import { Device } from "../types";
-import { getDeviceTypeIcon, getStatusIcon, getStatusLabel, getStatusColor } from "../utils/device-utils";
-import {
-  executeSimulatorCommand,
-  openSimulator,
-  startAndroidEmulator,
-  stopAndroidEmulator,
-  openAndroidEmulator,
-} from "../utils/simulator-commands";
+import { getDeviceTypeIcon, getStatusIcon, getStatusLabel, getStatusColor } from "../utils";
+import { IOSDeviceActions, AndroidDeviceActions, CommonDeviceActions } from "./DeviceActions";
+import { formatDeviceVersion } from "../utils";
 
 interface DeviceListItemProps {
   device: Device;
@@ -16,18 +10,7 @@ interface DeviceListItemProps {
 }
 
 export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
-  // Format the version based on device category
-  let formattedVersion = device.runtime;
-
-  if (device.category === "ios") {
-    // Extract iOS version from runtime (e.g., "iOS-17-0" -> "iOS 17.0")
-    formattedVersion = device.runtime
-      .replace("iOS-", "iOS ")
-      .replace(/-/g, ".")
-      .replace("tvOS-", "tvOS ")
-      .replace("watchOS-", "watchOS ");
-  }
-  // For Android, the version is already formatted in fetchAndroidDevices
+  const formattedVersion = formatDeviceVersion(device.runtime, device.category);
 
   return (
     <List.Item
@@ -48,110 +31,12 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
       ]}
       actions={
         <ActionPanel>
-          {/* iOS Device Actions */}
-          {device.category === "ios" && (
-            <>
-              {device.status !== "Booted" && (
-                <Action
-                  title="Boot Simulator"
-                  icon={Icon.Play}
-                  onAction={async () => {
-                    try {
-                      await executeSimulatorCommand("boot", device.id, "Simulator booted successfully");
-                      onRefresh();
-                    } catch (error) {
-                      showFailureToast(error);
-                    }
-                  }}
-                />
-              )}
-              {device.status === "Booted" && (
-                <Action
-                  title="Shutdown Simulator"
-                  icon={Icon.Stop}
-                  onAction={async () => {
-                    try {
-                      await executeSimulatorCommand("shutdown", device.id, "Simulator shut down successfully");
-                      onRefresh();
-                    } catch (error) {
-                      showFailureToast(error);
-                    }
-                  }}
-                />
-              )}
-              <Action
-                title="Open Simulator"
-                icon={Icon.Eye}
-                onAction={async () => {
-                  try {
-                    await openSimulator(device.id);
-                    onRefresh();
-                  } catch (error) {
-                    showFailureToast(error);
-                  }
-                }}
-              />
-            </>
-          )}
+          {/* Render specific actions based on device category */}
+          {device.category === "ios" && <IOSDeviceActions device={device} onRefresh={onRefresh} />}
+          {device.category === "android" && <AndroidDeviceActions device={device} onRefresh={onRefresh} />}
 
-          {/* Android Device Actions */}
-          {device.category === "android" && (
-            <>
-              {device.status !== "Booted" && (
-                <Action
-                  title="Boot Emulator"
-                  icon={Icon.Play}
-                  onAction={async () => {
-                    try {
-                      await startAndroidEmulator(device.id);
-                      onRefresh();
-                    } catch (error) {
-                      showFailureToast(error);
-                    }
-                  }}
-                />
-              )}
-              {device.status === "Booted" && (
-                <Action
-                  title="Shutdown Emulator"
-                  icon={Icon.Stop}
-                  onAction={async () => {
-                    try {
-                      await stopAndroidEmulator(device.id);
-                      onRefresh();
-                    } catch (error) {
-                      showFailureToast(error);
-                    }
-                  }}
-                />
-              )}
-              <Action
-                title="Open Emulator"
-                icon={Icon.Eye}
-                onAction={() => {
-                  openAndroidEmulator(device.id);
-                  onRefresh();
-                }}
-              />
-            </>
-          )}
-
-          {/* Common Actions */}
-          <Action
-            title="Refresh Devices"
-            icon={Icon.RotateClockwise}
-            onAction={onRefresh}
-            shortcut={{ modifiers: ["cmd"], key: "r" }}
-          />
-          <Action.CopyToClipboard title="Copy Device Id" content={device.id} />
-
-          {/* Settings Action */}
-          <Action
-            title="Configure Android Sdk Path"
-            icon={Icon.Gear}
-            onAction={() => openExtensionPreferences()}
-            shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
-          />
+          {/* Common actions for all devices */}
+          <CommonDeviceActions device={device} onRefresh={onRefresh} />
         </ActionPanel>
       }
     />
