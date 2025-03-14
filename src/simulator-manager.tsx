@@ -3,7 +3,7 @@ import { showFailureToast } from "@raycast/utils";
 import { useState, useEffect } from "react";
 import { Device } from "./types";
 import { CATEGORIES, DEVICE_TYPE_ORDER, REFRESH_INTERVAL } from "./constants";
-import { filterDevices, groupDevicesByType } from "./utils/device-utils";
+import { filterDevices, groupDevicesByType } from "./utils";
 import { fetchIOSDevices, fetchAndroidDevices } from "./utils/simulator-commands";
 import { DeviceListItem } from "./components/DeviceListItem";
 
