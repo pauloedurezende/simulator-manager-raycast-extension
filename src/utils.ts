@@ -52,7 +52,7 @@ export function getDeviceType(name: string): DeviceType {
   return "Other";
 }
 
-export function getStatusLabel(status: string): string {
+export function getStatusLabel(status: string) {
   switch (status) {
     case "Booted":
       return "Running";
@@ -74,7 +74,7 @@ export function getStatusIcon(status: string) {
   }
 }
 
-export function getStatusColor(status: string): Color | undefined {
+export function getStatusColor(status: string) {
   switch (status) {
     case "Booted":
       return Color.Green;
@@ -83,7 +83,7 @@ export function getStatusColor(status: string): Color | undefined {
   }
 }
 
-export function formatDeviceVersion(runtime: string, category: string): string {
+export function formatDeviceVersion(runtime: string, category: string) {
   if (category === "ios") {
     return runtime.replace("iOS-", "iOS ").replace(/-/g, ".").replace("tvOS-", "tvOS ").replace("watchOS-", "watchOS ");
   }
@@ -91,7 +91,7 @@ export function formatDeviceVersion(runtime: string, category: string): string {
   return runtime;
 }
 
-export function filterDevices(devices: Device[], searchText: string, selectedCategory: string): Device[] {
+export function filterDevices(devices: Device[], searchText: string, selectedCategory: string) {
   return devices.filter((device) => {
     const matchesSearch = device.name.toLowerCase().includes(searchText.toLowerCase());
     const matchesCategory =
@@ -100,7 +100,7 @@ export function filterDevices(devices: Device[], searchText: string, selectedCat
   });
 }
 
-export function groupDevicesByType(devices: Device[]): Record<string, Device[]> {
+export function groupDevicesByType(devices: Device[]) {
   return devices.reduce(
     (acc, device) => {
       if (!acc[device.deviceType]) {

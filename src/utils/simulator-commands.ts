@@ -17,7 +17,7 @@ interface Preferences {
 export const execAsync = promisify(exec);
 
 // Fetch iOS simulators
-export async function fetchIOSDevices(): Promise<Device[]> {
+export async function fetchIOSDevices() {
   try {
     const { stdout: simulatorsOutput } = await execAsync("xcrun simctl list devices --json");
     const simulatorsData = JSON.parse(simulatorsOutput);
@@ -51,7 +51,7 @@ export async function fetchIOSDevices(): Promise<Device[]> {
 }
 
 // Find Android SDK tools
-export function findAndroidSdkTool(toolName: string): string | null {
+export function findAndroidSdkTool(toolName: string) {
   // Get the custom SDK path from preferences
   const preferences = getPreferenceValues<Preferences>();
   const customSdkPath = preferences.androidSdkPath?.trim();
@@ -98,7 +98,7 @@ export function findAndroidSdkTool(toolName: string): string | null {
 }
 
 // Fetch Android emulators
-export async function fetchAndroidDevices(): Promise<Device[]> {
+export async function fetchAndroidDevices() {
   try {
     // Find emulator and adb executables
     const emulatorPath = findAndroidSdkTool("emulator");
@@ -278,7 +278,7 @@ export async function fetchAndroidDevices(): Promise<Device[]> {
 }
 
 // Helper function to convert API level to Android version
-function getAndroidVersionFromApiLevel(apiLevel: number): string {
+function getAndroidVersionFromApiLevel(apiLevel: number) {
   const versionMap: Record<number, string> = {
     35: "15.0", // Android U
     34: "14.0", // Android Upside Down Cake
@@ -323,7 +323,7 @@ export async function openSimulator(deviceId: string) {
   }
 }
 
-export async function startAndroidEmulator(avdName: string): Promise<void> {
+export async function startAndroidEmulator(avdName: string) {
   try {
     const emulatorPath = findAndroidSdkTool("emulator");
     if (!emulatorPath) {
@@ -350,7 +350,7 @@ export async function startAndroidEmulator(avdName: string): Promise<void> {
   }
 }
 
-export async function stopAndroidEmulator(avdName: string): Promise<void> {
+export async function stopAndroidEmulator(avdName: string) {
   try {
     const adbPath = findAndroidSdkTool("adb");
     if (!adbPath) {
@@ -547,7 +547,7 @@ export async function stopAndroidEmulator(avdName: string): Promise<void> {
   }
 }
 
-export function openAndroidEmulator(avdName: string): void {
+export function openAndroidEmulator(avdName: string) {
   try {
     const emulatorPath = findAndroidSdkTool("emulator");
     if (!emulatorPath) {
