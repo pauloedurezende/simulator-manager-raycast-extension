@@ -43,7 +43,6 @@ export function DeviceListItem({ device, onRefresh }: DeviceListItemProps) {
 
   return (
     <List.Item
-      key={device.id}
       icon={getDeviceTypeIcon(device.deviceType)}
       title={device.name}
       subtitle={device.deviceType}
