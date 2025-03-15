@@ -17,6 +17,7 @@ export type DeviceType =
   | "Other";
 
 export type DeviceCategory = "ios" | "android";
+export type DeviceDisplayCategory = DeviceCategory | "all";
 
 export interface Device {
   id: string;

@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { showFailureToast } from "@raycast/utils";
-import { Device } from "../types";
+import { Device, DeviceCategory, DeviceDisplayCategory } from "../types";
 import { filterDevices } from "../utils";
 import { fetchIOSDevices, fetchAndroidDevices } from "../utils/simulator-commands";
 import { REFRESH_INTERVAL } from "../constants";
 
 interface UseDeviceManagerProps {
   androidSdkFound: boolean;
-  deviceTypesToDisplay: string;
+  deviceTypesToDisplay: DeviceDisplayCategory;
   searchText: string;
-  selectedCategory: string;
+  selectedCategory: DeviceDisplayCategory;
   xcodeFound: boolean;
 }
 
