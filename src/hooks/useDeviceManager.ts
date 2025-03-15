@@ -6,12 +6,16 @@ import { fetchIOSDevices, fetchAndroidDevices } from "../utils/simulator-command
 import { REFRESH_INTERVAL } from "../constants";
 
 interface UseDeviceManagerProps {
+  androidSdkFound: boolean;
   deviceTypesToDisplay: string;
-  selectedCategory: string;
   searchText: string;
+  selectedCategory: string;
+  xcodeFound: boolean;
 }
 
-export function useDeviceManager({ deviceTypesToDisplay, selectedCategory, searchText }: UseDeviceManagerProps) {
+export function useDeviceManager(props: UseDeviceManagerProps) {
+  const { androidSdkFound, deviceTypesToDisplay, searchText, selectedCategory, xcodeFound } = props;
+
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,11 +26,11 @@ export function useDeviceManager({ deviceTypesToDisplay, selectedCategory, searc
       let iosDevices: Device[] = [];
       let androidDevices: Device[] = [];
 
-      if (deviceTypesToDisplay === "all" || deviceTypesToDisplay === "ios") {
+      if ((deviceTypesToDisplay === "all" || deviceTypesToDisplay === "ios") && xcodeFound) {
         iosDevices = await fetchIOSDevices();
       }
 
-      if (deviceTypesToDisplay === "all" || deviceTypesToDisplay === "android") {
+      if ((deviceTypesToDisplay === "all" || deviceTypesToDisplay === "android") && androidSdkFound) {
         androidDevices = await fetchAndroidDevices();
       }
 
@@ -43,7 +47,7 @@ export function useDeviceManager({ deviceTypesToDisplay, selectedCategory, searc
     fetchDevices();
     const intervalId = setInterval(fetchDevices, REFRESH_INTERVAL);
     return () => clearInterval(intervalId);
-  }, [deviceTypesToDisplay]);
+  }, [deviceTypesToDisplay, androidSdkFound, xcodeFound]);
 
   const filteredDevices = filterDevices(devices, searchText, selectedCategory);
 

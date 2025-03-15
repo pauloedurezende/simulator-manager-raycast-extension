@@ -5,6 +5,7 @@ import { DeviceList } from "./components/DeviceList";
 import { SearchBar } from "./components/SearchBar";
 import { useDeviceManager } from "./hooks/useDeviceManager";
 import { useCategoryManager } from "./hooks/useCategoryManager";
+import { useEnvironmentChecker } from "./hooks/useEnvironmentChecker";
 
 interface Preferences {
   androidSdkPath?: string;
@@ -19,11 +20,21 @@ export default function Command() {
 
   const { selectedCategory, handleCategoryChange, showDropdown } = useCategoryManager(deviceTypesToDisplay);
 
-  const { devices, isLoading, fetchDevices } = useDeviceManager({
+  const { androidSdkFound, xcodeFound, isChecking: isCheckingEnvironment } = useEnvironmentChecker();
+
+  const {
+    devices,
+    fetchDevices,
+    isLoading: isLoadingDevices,
+  } = useDeviceManager({
+    androidSdkFound,
     deviceTypesToDisplay,
-    selectedCategory,
     searchText,
+    selectedCategory,
+    xcodeFound,
   });
+
+  const isLoading = isLoadingDevices || isCheckingEnvironment;
 
   return (
     <List
@@ -33,14 +44,22 @@ export default function Command() {
       searchBarPlaceholder="Search devices..."
       searchBarAccessory={
         <SearchBar
-          selectedCategory={selectedCategory}
-          onCategoryChange={handleCategoryChange}
           categories={CATEGORIES}
+          onCategoryChange={handleCategoryChange}
+          selectedCategory={selectedCategory}
           showDropdown={showDropdown}
         />
       }
     >
-      <DeviceList devices={devices} onRefresh={fetchDevices} />
+      <DeviceList
+        androidSdkFound={androidSdkFound}
+        devices={devices}
+        isLoading={isLoading}
+        onRefresh={fetchDevices}
+        searchText={searchText}
+        selectedCategory={selectedCategory}
+        xcodeFound={xcodeFound}
+      />
     </List>
   );
 }
