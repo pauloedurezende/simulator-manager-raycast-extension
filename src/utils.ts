@@ -1,5 +1,6 @@
 import { Color, Icon } from "@raycast/api";
 import { Device, DeviceType } from "./types";
+import { showFailureToast } from "@raycast/utils";
 
 export function getDeviceTypeIcon(deviceType: string) {
   switch (deviceType) {
@@ -110,4 +111,13 @@ export function groupDevicesByType(devices: Device[]): Record<string, Device[]> 
     },
     {} as Record<string, Device[]>,
   );
+}
+
+export async function executeWithErrorHandling(action: () => Promise<void>, onSuccess?: () => void) {
+  try {
+    await action();
+    if (onSuccess) onSuccess();
+  } catch (error) {
+    showFailureToast(error);
+  }
 }

@@ -302,17 +302,10 @@ function getAndroidVersionFromApiLevel(apiLevel: number): string {
 }
 
 // Execute a simulator command
-export async function executeSimulatorCommand(
-  command: string,
-  deviceId: string,
-  successMessage: string,
-): Promise<void> {
+export async function executeSimulatorCommand(command: string, deviceId: string, successMessage: string) {
   try {
     await execAsync(`xcrun simctl ${command} ${deviceId}`);
-    showToast({
-      style: Toast.Style.Success,
-      title: successMessage,
-    });
+    showToast({ style: Toast.Style.Success, title: successMessage });
   } catch (error) {
     showFailureToast(error, { title: `Failed to ${command} simulator` });
     throw error;
@@ -320,9 +313,9 @@ export async function executeSimulatorCommand(
 }
 
 // Open a simulator
-export function openSimulator(deviceId: string): void {
+export async function openSimulator(deviceId: string) {
   try {
-    exec(`open -a Simulator --args -CurrentDeviceUDID ${deviceId}`);
+    await execAsync(`open -a Simulator --args -CurrentDeviceUDID ${deviceId}`);
     showToast({ style: Toast.Style.Success, title: "Opening simulator" });
   } catch (error) {
     showFailureToast(error, { title: "Failed to open simulator" });
