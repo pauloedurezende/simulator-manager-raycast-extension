@@ -51,7 +51,7 @@ export async function fetchIOSDevices(): Promise<Device[]> {
 }
 
 // Find Android SDK tools
-function findAndroidSdkTool(toolName: string): string | null {
+export function findAndroidSdkTool(toolName: string): string | null {
   // Get the custom SDK path from preferences
   const preferences = getPreferenceValues<Preferences>();
   const customSdkPath = preferences.androidSdkPath?.trim();

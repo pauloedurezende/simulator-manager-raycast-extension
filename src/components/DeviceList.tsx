@@ -3,14 +3,43 @@ import { Device } from "../types";
 import { DEVICE_TYPE_ORDER } from "../constants";
 import { groupDevicesByType } from "../utils";
 import { DeviceListItem } from "./DeviceListItem";
+import { DeviceEmptyView } from "./DeviceEmptyView";
 
 interface DeviceListProps {
   devices: Device[];
   onRefresh: () => void;
+  selectedCategory: string;
+  searchText: string;
+  androidSdkFound: boolean;
+  xcodeFound: boolean;
+  isLoading: boolean;
 }
 
-export function DeviceList({ devices, onRefresh }: DeviceListProps) {
-  const groupedDevices = groupDevicesByType(devices);
+export function DeviceList({
+  devices = [],
+  onRefresh,
+  selectedCategory,
+  searchText = "",
+  androidSdkFound,
+  isLoading,
+  xcodeFound,
+}: DeviceListProps) {
+  const deviceArray = Array.isArray(devices) ? devices : [];
+
+  const groupedDevices = groupDevicesByType(deviceArray);
+
+  if (deviceArray.length === 0) {
+    return (
+      <DeviceEmptyView
+        androidSdkFound={androidSdkFound}
+        isLoading={isLoading}
+        isSearching={searchText?.length > 0}
+        onRefresh={onRefresh}
+        selectedCategory={selectedCategory}
+        xcodeFound={xcodeFound}
+      />
+    );
+  }
 
   const deviceTypes = Object.keys(groupedDevices).sort((a, b) => {
     const indexA = DEVICE_TYPE_ORDER.indexOf(a);
