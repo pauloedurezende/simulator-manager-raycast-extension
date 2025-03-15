@@ -23,16 +23,13 @@ export function useDeviceManager(props: UseDeviceManagerProps) {
     try {
       setIsLoading(true);
 
-      let iosDevices: Device[] = [];
-      let androidDevices: Device[] = [];
+      const shouldFetchIOS = ["all", "ios"].includes(deviceTypesToDisplay) && xcodeFound;
+      const shouldFetchAndroid = ["all", "android"].includes(deviceTypesToDisplay) && androidSdkFound;
 
-      if ((deviceTypesToDisplay === "all" || deviceTypesToDisplay === "ios") && xcodeFound) {
-        iosDevices = await fetchIOSDevices();
-      }
-
-      if ((deviceTypesToDisplay === "all" || deviceTypesToDisplay === "android") && androidSdkFound) {
-        androidDevices = await fetchAndroidDevices();
-      }
+      const [iosDevices, androidDevices] = await Promise.all([
+        shouldFetchIOS ? fetchIOSDevices() : Promise.resolve([]),
+        shouldFetchAndroid ? fetchAndroidDevices() : Promise.resolve([]),
+      ]);
 
       setDevices([...iosDevices, ...androidDevices]);
     } catch (error) {
