@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { showFailureToast } from "@raycast/utils";
 import { Device } from "../types";
 import { filterDevices } from "../utils";
@@ -19,7 +19,7 @@ export function useDeviceManager(props: UseDeviceManagerProps) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDevices = async () => {
+  const fetchDevices = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -41,13 +41,13 @@ export function useDeviceManager(props: UseDeviceManagerProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [deviceTypesToDisplay, androidSdkFound, xcodeFound]);
 
   useEffect(() => {
     fetchDevices();
     const intervalId = setInterval(fetchDevices, REFRESH_INTERVAL);
     return () => clearInterval(intervalId);
-  }, [deviceTypesToDisplay, androidSdkFound, xcodeFound]);
+  }, [fetchDevices]);
 
   const filteredDevices = filterDevices(devices, searchText, selectedCategory);
 
