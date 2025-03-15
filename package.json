@@ -34,9 +34,9 @@
         },
         {
           "required": true,
-          "title": "Device Types to Display",
+          "title": "Default Device View",
           "name": "deviceTypesToDisplay",
-          "description": "Choose which simulator types to display in the list",
+          "description": "Choose which simulator types to display when the extension starts",
           "type": "dropdown",
           "data": [
             {
