@@ -547,7 +547,7 @@ export async function stopAndroidEmulator(avdName: string) {
   }
 }
 
-export function openAndroidEmulator(avdName: string) {
+export async function openAndroidEmulator(avdName: string) {
   try {
     const emulatorPath = findAndroidSdkTool("emulator");
     if (!emulatorPath) {
@@ -570,5 +570,6 @@ export function openAndroidEmulator(avdName: string) {
     });
   } catch (error) {
     showFailureToast(error, { title: "Failed to open Android emulator" });
+    throw error;
   }
 }
