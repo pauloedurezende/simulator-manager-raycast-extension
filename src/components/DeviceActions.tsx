@@ -1,10 +1,8 @@
 import { Action, Icon, openExtensionPreferences } from "@raycast/api";
 import { Device } from "../types";
 import {
-  openSimulator,
   startAndroidEmulator,
   stopAndroidEmulator,
-  openAndroidEmulator,
   bootAndOpenSimulator,
   shutdownSimulator,
 } from "../utils/simulator-commands";
@@ -30,7 +28,6 @@ interface DeviceActionsProps {
 export function IOSDeviceActions({ device, onRefresh }: DeviceActionsProps) {
   const bootDevice = async () => bootAndOpenSimulator(device.id);
   const shutdownDevice = async () => shutdownSimulator(device.id);
-  const openDevice = async () => openSimulator(device.id);
 
   return (
     <>
@@ -48,11 +45,6 @@ export function IOSDeviceActions({ device, onRefresh }: DeviceActionsProps) {
           onAction={() => executeWithErrorHandling(shutdownDevice, onRefresh)}
         />
       )}
-      <Action
-        title={ACTION_TITLES.OPEN_IOS}
-        icon={Icon.Eye}
-        onAction={() => executeWithErrorHandling(openDevice, onRefresh)}
-      />
     </>
   );
 }
@@ -60,7 +52,6 @@ export function IOSDeviceActions({ device, onRefresh }: DeviceActionsProps) {
 export function AndroidDeviceActions({ device, onRefresh }: DeviceActionsProps) {
   const bootEmulator = () => startAndroidEmulator(device.id);
   const shutdownEmulator = () => stopAndroidEmulator(device.id);
-  const openEmulator = async () => openAndroidEmulator(device.id);
 
   return (
     <>
@@ -78,11 +69,6 @@ export function AndroidDeviceActions({ device, onRefresh }: DeviceActionsProps) 
           onAction={() => executeWithErrorHandling(shutdownEmulator, onRefresh)}
         />
       )}
-      <Action
-        title={ACTION_TITLES.OPEN_ANDROID}
-        icon={Icon.Eye}
-        onAction={() => executeWithErrorHandling(openEmulator, onRefresh)}
-      />
     </>
   );
 }
@@ -96,7 +82,11 @@ export function CommonDeviceActions({ device, onRefresh }: DeviceActionsProps) {
         onAction={onRefresh}
         shortcut={{ modifiers: ["cmd"], key: "r" }}
       />
-      <Action.CopyToClipboard title={ACTION_TITLES.COPY_ID} content={device.id} />
+      <Action.CopyToClipboard
+        title={ACTION_TITLES.COPY_ID}
+        content={device.id}
+        shortcut={{ modifiers: ["cmd"], key: "i" }}
+      />
       <Action
         title={ACTION_TITLES.CONFIGURE}
         icon={Icon.Gear}
