@@ -40,3 +40,15 @@ export const TOAST_MESSAGES = {
     ANDROID_EMULATOR_STOP_FAILED: { title: "Failed to stop Android emulator" },
   },
 };
+
+export const ACTION_TITLES = {
+  BOOT_IOS: "Boot Simulator",
+  SHUTDOWN_IOS: "Shutdown Simulator",
+  OPEN_IOS: "Open Simulator",
+  BOOT_ANDROID: "Boot Emulator",
+  SHUTDOWN_ANDROID: "Shutdown Emulator",
+  OPEN_ANDROID: "Open Emulator",
+  REFRESH: "Refresh Devices",
+  COPY_ID: "Copy Device Id",
+  CONFIGURE: "Configure Android Sdk Path",
+};

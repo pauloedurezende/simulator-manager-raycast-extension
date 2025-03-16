@@ -7,18 +7,7 @@ import {
   shutdownSimulator,
 } from "../utils/simulator-commands";
 import { executeWithErrorHandling } from "../utils";
-
-const ACTION_TITLES = {
-  BOOT_IOS: "Boot Simulator",
-  SHUTDOWN_IOS: "Shutdown Simulator",
-  OPEN_IOS: "Open Simulator",
-  BOOT_ANDROID: "Boot Emulator",
-  SHUTDOWN_ANDROID: "Shutdown Emulator",
-  OPEN_ANDROID: "Open Emulator",
-  REFRESH: "Refresh Devices",
-  COPY_ID: "Copy Device Id",
-  CONFIGURE: "Configure Android Sdk Path",
-};
+import { ACTION_TITLES } from "../constants";
 
 interface DeviceActionsProps {
   device: Device;
