@@ -84,12 +84,18 @@ export function getStatusColor(status: string) {
 }
 
 export function filterDevices(devices: Device[], searchText: string, selectedCategory: string) {
-  return devices.filter((device) => {
-    const matchesSearch = device.name.toLowerCase().includes(searchText.toLowerCase());
-    const matchesCategory =
-      selectedCategory.toLowerCase() === "all" || device.category.toLowerCase() === selectedCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
-  });
+  const lowerSearchText = searchText.toLowerCase();
+  const lowerSelectedCategory = selectedCategory.toLowerCase();
+  const isAllCategory = lowerSelectedCategory === "all";
+
+  if (isAllCategory) {
+    return devices.filter((device) => device.name.toLowerCase().includes(lowerSearchText));
+  }
+
+  return devices.filter(
+    (device) =>
+      device.name.toLowerCase().includes(lowerSearchText) && device.category.toLowerCase() === lowerSelectedCategory,
+  );
 }
 
 export function groupDevicesByType(devices: Device[]) {
