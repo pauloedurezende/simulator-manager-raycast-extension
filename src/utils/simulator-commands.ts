@@ -285,24 +285,36 @@ export async function fetchAndroidDevices() {
   }
 }
 
-// Execute a simulator command
-export async function executeSimulatorCommand(command: string, deviceId: string, successMessage: string) {
+export async function bootAndOpenSimulator(deviceId: string) {
   try {
-    await execAsync(`xcrun simctl ${command} ${deviceId}`);
-    showToast({ style: Toast.Style.Success, title: successMessage });
+    await execAsync(`xcrun simctl boot ${deviceId}`);
+    await execAsync(`open -a Simulator --args -CurrentDeviceUDID ${deviceId}`);
+
+    showToast({ style: Toast.Style.Success, title: "Simulator booted and opened successfully" });
   } catch (error) {
-    showFailureToast(error, { title: `Failed to ${command} simulator` });
+    showFailureToast(error, { title: "Failed to boot and open simulator" });
     throw error;
   }
 }
 
-// Open a simulator
 export async function openSimulator(deviceId: string) {
   try {
     await execAsync(`open -a Simulator --args -CurrentDeviceUDID ${deviceId}`);
+
     showToast({ style: Toast.Style.Success, title: "Opening simulator" });
   } catch (error) {
     showFailureToast(error, { title: "Failed to open simulator" });
+    throw error;
+  }
+}
+
+export async function shutdownSimulator(deviceId: string) {
+  try {
+    await execAsync(`xcrun simctl shutdown ${deviceId}`);
+
+    showToast({ style: Toast.Style.Success, title: "Simulator shut down successfully" });
+  } catch (error) {
+    showFailureToast(error, { title: "Failed to shutdown simulator" });
     throw error;
   }
 }

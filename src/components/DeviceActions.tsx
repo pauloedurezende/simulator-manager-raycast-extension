@@ -1,11 +1,12 @@
 import { Action, Icon, openExtensionPreferences } from "@raycast/api";
 import { Device } from "../types";
 import {
-  executeSimulatorCommand,
   openSimulator,
   startAndroidEmulator,
   stopAndroidEmulator,
   openAndroidEmulator,
+  bootAndOpenSimulator,
+  shutdownSimulator,
 } from "../utils/simulator-commands";
 import { executeWithErrorHandling } from "../utils";
 
@@ -27,10 +28,9 @@ interface DeviceActionsProps {
 }
 
 export function IOSDeviceActions({ device, onRefresh }: DeviceActionsProps) {
-  const bootSimulator = async () => executeSimulatorCommand("boot", device.id, "Simulator booted successfully");
-  const shutdownSimulator = async () =>
-    executeSimulatorCommand("shutdown", device.id, "Simulator shut down successfully");
-  const openIOSSimulator = async () => openSimulator(device.id);
+  const bootDevice = async () => bootAndOpenSimulator(device.id);
+  const shutdownDevice = async () => shutdownSimulator(device.id);
+  const openDevice = async () => openSimulator(device.id);
 
   return (
     <>
@@ -38,20 +38,20 @@ export function IOSDeviceActions({ device, onRefresh }: DeviceActionsProps) {
         <Action
           title={ACTION_TITLES.BOOT_IOS}
           icon={Icon.Play}
-          onAction={() => executeWithErrorHandling(bootSimulator, onRefresh)}
+          onAction={() => executeWithErrorHandling(bootDevice, onRefresh)}
         />
       )}
       {device.status === "Booted" && (
         <Action
           title={ACTION_TITLES.SHUTDOWN_IOS}
           icon={Icon.Stop}
-          onAction={() => executeWithErrorHandling(shutdownSimulator, onRefresh)}
+          onAction={() => executeWithErrorHandling(shutdownDevice, onRefresh)}
         />
       )}
       <Action
         title={ACTION_TITLES.OPEN_IOS}
         icon={Icon.Eye}
-        onAction={() => executeWithErrorHandling(openIOSSimulator, onRefresh)}
+        onAction={() => executeWithErrorHandling(openDevice, onRefresh)}
       />
     </>
   );
