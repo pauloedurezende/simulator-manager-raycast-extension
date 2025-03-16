@@ -7,7 +7,7 @@ import { Device, DeviceType, SimulatorDevice } from "../types";
 import { homedir } from "os";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
-import { getDeviceType } from "../utils";
+import { getAndroidVersionFromApiLevel, getDeviceType } from "../utils";
 
 // Get user preferences
 interface Preferences {
@@ -16,6 +16,7 @@ interface Preferences {
 
 export const execAsync = promisify(exec);
 
+// Fetch iOS simulators
 // Fetch iOS simulators
 export async function fetchIOSDevices() {
   try {
@@ -29,6 +30,14 @@ export async function fetchIOSDevices() {
       // Type assertion to help TypeScript understand the structure
       const devices = deviceList as SimulatorDevice[];
 
+      const runtimeWithoutPrefix = runtime.replace("com.apple.CoreSimulator.SimRuntime.", "");
+
+      const formattedRuntime = runtimeWithoutPrefix
+        .replace("iOS-", "iOS ")
+        .replace(/-/g, ".")
+        .replace("tvOS-", "tvOS ")
+        .replace("watchOS-", "watchOS ");
+
       devices.forEach((device) => {
         const deviceType = getDeviceType(device.name);
         iosDevices.push({
@@ -36,7 +45,7 @@ export async function fetchIOSDevices() {
           name: device.name,
           status: device.state,
           type: device.deviceTypeIdentifier || "",
-          runtime: runtime.replace("com.apple.CoreSimulator.SimRuntime.", ""),
+          runtime: formattedRuntime, // Usar a versão já formatada
           category: "ios",
           deviceType,
         });
@@ -235,13 +244,13 @@ export async function fetchAndroidDevices() {
         const androidVersionMatch = configContent.match(/image\.sysdir\.1\s*=\s*.*android-(\d+)/);
         if (androidVersionMatch && androidVersionMatch[1]) {
           const apiLevel = parseInt(androidVersionMatch[1]);
-          androidVersion = `Android ${getAndroidVersionFromApiLevel(apiLevel)}`;
+          androidVersion = getAndroidVersionFromApiLevel(apiLevel);
         } else {
           // Fallback to target property if image.sysdir.1 is not found
           const apiLevelMatch = configContent.match(/target\s*=\s*([0-9]+)/);
           if (apiLevelMatch && apiLevelMatch[1]) {
             const apiLevel = parseInt(apiLevelMatch[1]);
-            androidVersion = `Android ${getAndroidVersionFromApiLevel(apiLevel)}`;
+            androidVersion = getAndroidVersionFromApiLevel(apiLevel);
           }
         }
 
@@ -250,7 +259,7 @@ export async function fetchAndroidDevices() {
           const apiLevelInName = avdName.match(/API_(\d+)/i) || avdName.match(/Android_(\d+)/i);
           if (apiLevelInName && apiLevelInName[1]) {
             const apiLevel = parseInt(apiLevelInName[1]);
-            androidVersion = `Android ${getAndroidVersionFromApiLevel(apiLevel)}`;
+            androidVersion = getAndroidVersionFromApiLevel(apiLevel);
           }
         }
       }
@@ -275,30 +284,6 @@ export async function fetchAndroidDevices() {
     // Return empty array instead of throwing to avoid breaking iOS functionality
     return [];
   }
-}
-
-// Helper function to convert API level to Android version
-function getAndroidVersionFromApiLevel(apiLevel: number) {
-  const versionMap: Record<number, string> = {
-    35: "15.0", // Android U
-    34: "14.0", // Android Upside Down Cake
-    33: "13.0", // Android Tiramisu
-    32: "12.1", // Android 12L
-    31: "12.0", // Android Snow Cone
-    30: "11.0", // Android Red Velvet Cake
-    29: "10.0", // Android Quince Tart
-    28: "9.0", // Android Pie
-    27: "8.1", // Android Oreo
-    26: "8.0", // Android Oreo
-    25: "7.1", // Android Nougat
-    24: "7.0", // Android Nougat
-    23: "6.0", // Android Marshmallow
-    22: "5.1", // Android Lollipop
-    21: "5.0", // Android Lollipop
-    // Add more mappings as needed
-  };
-
-  return versionMap[apiLevel] || `API ${apiLevel}`;
 }
 
 // Execute a simulator command

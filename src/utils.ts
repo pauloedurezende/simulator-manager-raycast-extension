@@ -83,14 +83,6 @@ export function getStatusColor(status: string) {
   }
 }
 
-export function formatDeviceVersion(runtime: string, category: string) {
-  if (category === "ios") {
-    return runtime.replace("iOS-", "iOS ").replace(/-/g, ".").replace("tvOS-", "tvOS ").replace("watchOS-", "watchOS ");
-  }
-
-  return runtime;
-}
-
 export function filterDevices(devices: Device[], searchText: string, selectedCategory: string) {
   return devices.filter((device) => {
     const matchesSearch = device.name.toLowerCase().includes(searchText.toLowerCase());
@@ -120,4 +112,26 @@ export async function executeWithErrorHandling(action: () => Promise<void>, onSu
   } catch (error) {
     showFailureToast(error);
   }
+}
+
+export function getAndroidVersionFromApiLevel(apiLevel: number) {
+  const versionMap: Record<number, string> = {
+    35: "15.0", // Android U
+    34: "14.0", // Android Upside Down Cake
+    33: "13.0", // Android Tiramisu
+    32: "12.1", // Android 12L
+    31: "12.0", // Android Snow Cone
+    30: "11.0", // Android Red Velvet Cake
+    29: "10.0", // Android Quince Tart
+    28: "9.0", // Android Pie
+    27: "8.1", // Android Oreo
+    26: "8.0", // Android Oreo
+    25: "7.1", // Android Nougat
+    24: "7.0", // Android Nougat
+    23: "6.0", // Android Marshmallow
+    22: "5.1", // Android Lollipop
+    21: "5.0", // Android Lollipop
+  };
+
+  return `Android ${versionMap[apiLevel]}` || `Android API ${apiLevel}`;
 }
