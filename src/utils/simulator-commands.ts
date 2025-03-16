@@ -17,7 +17,6 @@ interface Preferences {
 export const execAsync = promisify(exec);
 
 // Fetch iOS simulators
-// Fetch iOS simulators
 export async function fetchIOSDevices() {
   try {
     const { stdout: simulatorsOutput } = await execAsync("xcrun simctl list devices --json");
@@ -45,7 +44,7 @@ export async function fetchIOSDevices() {
           name: device.name,
           status: device.state,
           type: device.deviceTypeIdentifier || "",
-          runtime: formattedRuntime, // Usar a versão já formatada
+          runtime: formattedRuntime,
           category: "ios",
           deviceType,
         });
